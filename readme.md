@@ -1,5 +1,5 @@
 # Bash LAMP setup
-This bash script will allow you to quickly get a full LAMP stack set up on Ubuntu/Debian.
+This bash script will allow you to quickly get a full LAMP stack set up on Ubuntu/Debian from your local machine to a remote host.
 It will install:
 * Apache2
 * PHP5 [php5-curl, php5-mysql, libapache2-mod-php5, php5-mcrypt]
