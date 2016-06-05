@@ -25,6 +25,16 @@ MYSQL=false;
 function serverSetup {
   if [ "`lsb_release -is`" == "Ubuntu" ] || [ "`lsb_release -is`" == "Debian" ]
   then
+      if [ "`whoami`" == "root" ];
+      then
+          printf "\e[31mLooks like you are running as root! Do you want to set up a new user (You really should)?\n\e[39m";
+          select yn in "Yes" "No"; do
+              case $yn in
+                  Yes ) createNewUser; break;;
+                  No ) break;;
+              esac
+          done
+      fi
       printf "Do you need MySQL?\n"
       select yn in "Yes" "No"; do
           case $yn in
@@ -101,6 +111,16 @@ function serverSetup {
       printf "\e[31mUnsupported Operating System\n\e[39m";
   fi
 }
+function createNewUser {
+  read -p "User name:" username;
+  adduser $username;
+  gpasswd -a $username sudo;
+  su $username;
+  cd ~/.ssh;
+  touch authorized_keys;
+  chmod 600 authorized_keys;
+  exit;
+}
 #this will obviously only work for Apache. You will also need to set up the directory once this is created.
 #if you installed wordpress the dir has already been created so use that.
 function setUpVhost {
@@ -114,6 +134,7 @@ function setUpVhost {
   then
     sudo mkdir $docRoot;
     sudo chown -R www-data:www-data $docRoot;
+    sudo chmod 755 $docRoot;
   fi
   newSiteConf="$sitesAvailable$domain.conf";
   printf "<VirtualHost *:80>
