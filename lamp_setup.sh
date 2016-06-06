@@ -7,140 +7,139 @@
 #lets encrypt
 #OPTIONALS:
 #MySQL
-#WP-CLI (if using wordpress)
+#Wordpress and the WP-CLI tools
 #Fail2Ban
 
 #Note the use of sudo, you should never be running this script as root!
 #if you want to run this from a local to remote host use: ssh <your ssh config host> -t "$(<lamp_setup.sh)"
 
 #Written by: Colin Mackenzie
-#Updated: 4-6-16
+#Updated: 6-6-16
 #****************************************************************
 
-#Envars used to control optionals
-WORDPRESS=false;
-FAIL2BAN=false;
-MYSQL=false;
-
-function serverSetup {
-  if [ "`lsb_release -is`" == "Ubuntu" ] || [ "`lsb_release -is`" == "Debian" ]
+#vars used to control optionals
+wordpress=false;
+fail2Ban=false;
+mySql=false;
+function checkOsSupport {
+  if [ "`lsb_release -is`" != "Ubuntu" ] && [ "`lsb_release -is`" != "Debian" ]
   then
-      if [ "`whoami`" == "root" ];
-      then
-          printf "\e[31mLooks like you are running as root! Do you want to set up a new user (You really should)?\n\e[39m";
-          select yn in "Yes" "No"; do
-              case $yn in
-                  Yes ) createNewUser; break;;
-                  No ) break;;
-              esac
-          done
-      fi
-      printf "Do you need MySQL?\n"
+    echo $redText"Unsupported OS. This only works for Ubuntu";
+    exit;
+  fi
+}
+function setOptionals {
+    printf "Do you need MySQL?\n"
+    select yn in "Yes" "No"; do
+        case $yn in
+            Yes ) mySql=true; break;;
+            No ) mySql=false; break;;
+        esac
+    done
+    printf "Do you need Wordpress & the CLI tools?\n"
+    select yn in "Yes" "No"; do
+        case $yn in
+            Yes ) wordpress=true; break;;
+            No ) wordpress=false; break;;
+        esac
+    done
+    printf "Do you need Fail2Ban?\n"
+    select yn in "Yes" "No"; do
+        case $yn in
+            Yes ) fail2Ban=true; break;;
+            No ) fail2Ban=false; break;;
+        esac
+    done
+    printf "Do you need to set up a vHost?\n"
+    select yn in "Yes" "No"; do
+        case $yn in
+            Yes ) vHost=true; break;;
+            No ) vHost=false; break;;
+        esac
+    done
+}
+function setUpDefaults {
+  sudo apt-get update;
+}
+function installLap {
+  sudo apt-get -y install apache2;
+  sudo apt-get -y install php5 libapache2-mod-php5 php5-mcrypt php5-mysql php5-curl;
+  sudo chmod 755 -R /var/www/;
+  sudo printf "<?php\nphpinfo();\n?>" > /var/www/html/info.php;
+  sudo service apache2 restart;
+  sudo apt-get -y install git;
+  printf "\e[32mApache2, PHP5, Git and installed. An info.php file has been created in you webroot (/var/www/html/info.php)\n\e[39m";
+}
+#install lets encrypt
+function installLe {
+  cd /;
+  sudo git clone https://github.com/certbot/certbot;
+}
+function checkForRoot {
+  if [ "`whoami`" == "root" ];
+  then
+    printf "\e[31mLooks like you are running as root! Do you want to set up a new user?\n
+    WARNING! This will copy your current ssh public key into the authorized_keys of the
+    new user. It is reccomended you have a backup of this key and an alternative means of
+    accessing the server should an error occur during the write.\n\n\e[39m"
       select yn in "Yes" "No"; do
           case $yn in
-              Yes ) MYSQL=true; break;;
-              No ) MYSQL=false; break;;
+              Yes ) createNewUser; break;;
+              No ) break;;
           esac
       done
-      printf "Do you need Wordpress & the CLI tools?\n"
-      select yn in "Yes" "No"; do
-          case $yn in
-              Yes ) WORDPRESS=true; break;;
-              No ) WORDPRESS=false; break;;
-          esac
-      done
-      printf "Do you need Fail2Ban?\n"
-      select yn in "Yes" "No"; do
-          case $yn in
-              Yes ) FAIL2BAN=true; break;;
-              No ) FAIL2BAN=false; break;;
-          esac
-      done
-      sudo apt-get update;
-      sudo apt-get -y install apache2;
-      sudo apt-get -y install php5 libapache2-mod-php5 php5-mcrypt php5-mysql php5-curl;
-      sudo chmod 755 -R /var/www/;
-      sudo printf "<?php\nphpinfo();\n?>" > /var/www/html/info.php;
-      sudo service apache2 restart;
-      sudo apt-get -y install git;
-      #install lets encrypt
-      cd /;
-      sudo git clone https://github.com/certbot/certbot;
-      printf "\e[32mApache2, PHP5, Git and Let's Encrypt installed. An info.php file has been created in you webroot (/var/www/html/info.php)\n\e[39m";
-      if $MYSQL
-      then
-          sudo apt-get -y install mysql-server libapache2-mod-auth-mysql;
-          #NOTE you will need to set up the secure db install after this manually
-          #sudo mysql_install_db
-          #sudo /usr/bin/mysql_secure_installation
-          #.....
-          printf "\e[32mMySQL Installed. Please run secure install. \"mysql_secure_installation\"\n\e[39m";
-      fi
-      if $WORDPRESS
-      then
-          sudo curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar;
-          sudo chmod +x wp-cli.phar;
-          sudo mv wp-cli.phar /usr/local/bin/wp;
-          printf "Enter dir name for WP install (advise using root domin name):\n";
-          read WPDIR;
-          cd /var/www/html;
-          sudo mkdir $WPDIR;
-          sudo chown -R www-data:www-data $WPDIR;
-          cd $WPDIR;
-          wp core download --allow-root;
-          printf "\e[32mWordpress & CLI tools installed\n\e[39m";
-      fi
-      if $FAIL2BAN
-      then
-          sudo apt-get -y install fail2ban;
-          sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local;
-          printf "\e[32mFail2Ban installed\n\e[39m";
-      fi
-      printf "Do you want to set up a vHost?\n"
-      select yn in "Yes" "No"; do
-          case $yn in
-              Yes ) vHost=true; break;;
-              No ) vHost=false; break;;
-          esac
-      done
-      if $vHost
-      then
-          setUpVhost;
-      fi
-  else
-      printf "\e[31mUnsupported Operating System\n\e[39m";
   fi
 }
 function createNewUser {
   read -p "User name:" username;
   adduser $username;
   gpasswd -a $username sudo;
-  su $username;
-  cd ~/.ssh;
+  rootKey=$(<~/.ssh/authorized_keys);
+  if [ ! -d "/home/$username/ssh" ]
+  then
+    sudo mkdir /home/$username/.ssh;
+    sudo chmod 700 /home/$username/.ssh;
+  fi
+  cd /home/$username/.ssh;
   touch authorized_keys;
+  echo $rootKey >> authorized_keys;
+  chown -R $username:$username /home/$username/.ssh;
   chmod 600 authorized_keys;
-  exit;
 }
-#this will obviously only work for Apache. You will also need to set up the directory once this is created.
-#if you installed wordpress the dir has already been created so use that.
+function installWordpress {
+  sudo curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar;
+  sudo chmod +x wp-cli.phar;
+  sudo mv wp-cli.phar /usr/local/bin/wp;
+  read -p "Enter full dir path for Wordpress install: " wpDir;
+  sudo mkdir $wpDir;
+  sudo chown -R $USER:www-data $wpDir;
+  cd $wpDir;
+  wp core download --allow-root;
+  printf "\e[32mWordpress & CLI tools installed in $wpDir. You can check the CLI tools with wp --info.\n\e[39m";
+}
+function installFail2ban {
+  sudo apt-get -y install fail2ban;
+  sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local;
+  printf "\e[32mFail2Ban installed.\n\e[39m";
+}
+#!/bin/bash
 function setUpVhost {
   sitesEnable='/etc/apache2/sites-enabled/';
   sitesAvailable='/etc/apache2/sites-available/';
   read -p "Server admin email:" email;
   read -p "Domain root name (do NOT add www):" domain;
-  docRoot="/var/www/html/$domain";
+  read -p "Enter full doc root path:" docRoot;
   #make sure this doc root exists
   if [ ! -d "$docRoot" ]
   then
     sudo mkdir $docRoot;
-    sudo chown -R www-data:www-data $docRoot;
+    sudo chown -R $USER:www-data $docRoot;
     sudo chmod 755 $docRoot;
   fi
   newSiteConf="$sitesAvailable$domain.conf";
   printf "<VirtualHost *:80>
 			ServerAdmin $email
 			ServerName $domain
-			ServerAlias www.$domain
 			DocumentRoot $docRoot
 			<Directory />
 				AllowOverride All
@@ -156,19 +155,44 @@ function setUpVhost {
 		</VirtualHost>" > $newSiteConf;
     sudo a2ensite $domain;
     sudo service apache2 restart;
-    printf "Do you want to set up TLS for this domain (you must already have DNS set up)?\n"
-    select yn in "Yes" "No"; do
-        case $yn in
-            Yes ) cd /certbot; ./certbot-auto; break;;
-            No ) exit; break;;
-        esac
-    done
+    printf "New vHost created. Your doc root is $docRoot. Custom error logs have been added to /var/log/apache2.";
+}
+function runOptionalInstall {
+  if $mySql
+  then
+      sudo apt-get -y install mysql-server libapache2-mod-auth-mysql;
+      #NOTE you will need to set up the secure db install after this manually
+      #sudo mysql_install_db
+      #sudo /usr/bin/mysql_secure_installation
+      #.....
+      printf "\e[32mMySQL Installed. Please run secure install. \"mysql_secure_installation\"\n\e[39m";
+  fi
+  if $wordpress
+  then
+      installWordpress;
+  fi
+  if $fail2Ban
+  then
+      installFail2ban;
+  fi
+  if $vHost
+  then
+      setUpVhost;
+  fi
 }
 
-printf "We are about to install an a complete LAMP stack. Ensure you are doing this on a new, clean server.\nContinue? (Use numeric selections)\n"
+printf "\nYou are about to install an a complete LAMP stack. Ensure you are doing this on a new, clean server.
+\nContinue? (Use numeric selections)\n";
 select yn in "Yes" "No"; do
     case $yn in
-        Yes ) serverSetup; break;;
+        Yes ) break;;
         No ) exit;;
     esac
 done
+checkOsSupport;
+setOptionals;
+setUpDefaults;
+installLap;
+installLe;
+checkForRoot;
+runOptionalInstall;
