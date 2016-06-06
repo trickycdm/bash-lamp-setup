@@ -95,7 +95,7 @@ function createNewUser {
   adduser $username;
   gpasswd -a $username sudo;
   rootKey=$(<~/.ssh/authorized_keys);
-  if [ ! -d "/home/$username/ssh" ]
+  if [ ! -d "/home/$username/.ssh" ]
   then
     sudo mkdir /home/$username/.ssh;
     sudo chmod 700 /home/$username/.ssh;
