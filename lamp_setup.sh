@@ -24,7 +24,7 @@ mySql=false;
 function checkOsSupport {
   if [ "`lsb_release -is`" != "Ubuntu" ] && [ "`lsb_release -is`" != "Debian" ]
   then
-    echo $redText"Unsupported OS. This only works for Ubuntu";
+    echo "\e[31mUnsupported OS. This only works for Ubuntu/Debian!\e[39m";
     exit;
   fi
 }
