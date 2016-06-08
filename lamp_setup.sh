@@ -107,6 +107,8 @@ function createNewUser {
   chmod 600 authorized_keys;
 }
 function installWordpress {
+  #install the Apache2 mod rewrite module to allow Wordpress to use htaccess
+  sudo a2enmod rewrite;
   sudo curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar;
   sudo chmod +x wp-cli.phar;
   sudo mv wp-cli.phar /usr/local/bin/wp;
@@ -126,9 +128,10 @@ function installFail2ban {
 function setUpVhost {
   sitesEnable='/etc/apache2/sites-enabled/';
   sitesAvailable='/etc/apache2/sites-available/';
+  printf "Begin Vhost Setup\n";
   read -p "Server admin email:" email;
-  read -p "Domain root name (do NOT add www):" domain;
-  read -p "Enter full doc root path:" docRoot;
+  read -p "Domain root name (do NOT add www): " domain;
+  read -p "Enter full doc root path: " docRoot;
   #make sure this doc root exists
   if [ ! -d "$docRoot" ]
   then
@@ -155,7 +158,7 @@ function setUpVhost {
 		</VirtualHost>" > $newSiteConf;
     sudo a2ensite $domain;
     sudo service apache2 restart;
-    printf "New vHost created. Your doc root is $docRoot. Custom error logs have been added to /var/log/apache2.";
+    printf "New vHost created. Your doc root is $docRoot. Custom error logs have been added to /var/log/apache2.\n\n";
 }
 function runOptionalInstall {
   if $mySql
