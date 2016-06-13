@@ -91,7 +91,7 @@ function checkForRoot {
   fi
 }
 function createNewUser {
-  read -p "User name:" username;
+  read -p "User name: " username;
   adduser $username;
   gpasswd -a $username sudo;
   rootKey=$(<~/.ssh/authorized_keys);
@@ -128,8 +128,8 @@ function installFail2ban {
 function setUpVhost {
   sitesEnable='/etc/apache2/sites-enabled/';
   sitesAvailable='/etc/apache2/sites-available/';
-  printf "Begin Vhost Setup\n";
-  read -p "Server admin email:" email;
+  printf "\e[32mBegin Vhost Setup\n\e[39m";
+  read -p "Server admin email: " email;
   read -p "Domain root name (do NOT add www): " domain;
   read -p "Enter full doc root path: " docRoot;
   #make sure this doc root exists
@@ -164,10 +164,8 @@ function runOptionalInstall {
   if $mySql
   then
       sudo apt-get -y install mysql-server libapache2-mod-auth-mysql;
-      #NOTE you will need to set up the secure db install after this manually
-      #sudo mysql_install_db
-      #sudo /usr/bin/mysql_secure_installation
-      #.....
+      sudo mysql_install_db
+      sudo /usr/bin/mysql_secure_installation
       printf "\e[32mMySQL Installed. Please run secure install. \"mysql_secure_installation\"\n\e[39m";
   fi
   if $wordpress
