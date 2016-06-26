@@ -21,10 +21,15 @@
 wordpress=false;
 fail2Ban=false;
 mySql=false;
+#colors
+greenText="\e[32m";
+redText="\e[31m";
+defaultText="\e[39m";
+
 function checkOsSupport {
   if [ "`lsb_release -is`" != "Ubuntu" ] && [ "`lsb_release -is`" != "Debian" ]
   then
-    echo "\e[31mUnsupported OS. This only works for Ubuntu/Debian!\e[39m";
+    echo "${redText}Unsupported OS. This only works for Ubuntu/Debian!${defaultText}";
     exit;
   fi
 }
@@ -68,7 +73,7 @@ function installLap {
   sudo printf "<?php\nphpinfo();\n?>" > /var/www/html/info.php;
   sudo service apache2 restart;
   sudo apt-get -y install git;
-  printf "\e[32mApache2, PHP5, Git and installed. An info.php file has been created in you webroot (/var/www/html/info.php)\n\e[39m";
+  printf "${greenText}Apache2, PHP5, Git and installed. An info.php file has been created in you webroot (/var/www/html/info.php)\n${defaultText}";
 }
 #install lets encrypt
 function installLe {
@@ -78,10 +83,10 @@ function installLe {
 function checkForRoot {
   if [ "`whoami`" == "root" ];
   then
-    printf "\e[31mLooks like you are running as root! Do you want to set up a new user?\n
+    printf "${redText}Looks like you are running as root! Do you want to set up a new user?\n
     WARNING! This will copy your current ssh public key into the authorized_keys of the
     new user. It is reccomended you have a backup of this key and an alternative means of
-    accessing the server should an error occur during the write.\n\n\e[39m"
+    accessing the server should an error occur during the write.\n\n${defaultText}"
       select yn in "Yes" "No"; do
           case $yn in
               Yes ) createNewUser; break;;
@@ -114,21 +119,21 @@ function installWordpress {
   sudo mv wp-cli.phar /usr/local/bin/wp;
   read -p "Enter full dir path for Wordpress install: " wpDir;
   sudo mkdir $wpDir;
-  sudo chown -R $USER:www-data $wpDir;
+  sudo chown -R www-data:www-data $wpDir;
   cd $wpDir;
   wp core download --allow-root;
-  printf "\e[32mWordpress & CLI tools installed in $wpDir. You can check the CLI tools with wp --info.\n\e[39m";
+  printf "${greenText}Wordpress & CLI tools installed in $wpDir. You can check the CLI tools with wp --info.\n${defaultText}";
 }
 function installFail2ban {
   sudo apt-get -y install fail2ban;
   sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local;
-  printf "\e[32mFail2Ban installed.\n\e[39m";
+  printf "${greenText}Fail2Ban installed.\n${defaultText}";
 }
 #!/bin/bash
 function setUpVhost {
   sitesEnable='/etc/apache2/sites-enabled/';
   sitesAvailable='/etc/apache2/sites-available/';
-  printf "\e[32mBegin Vhost Setup\n\e[39m";
+  printf "${greenText}Begin Vhost Setup\n${defaultText}";
   read -p "Server admin email: " email;
   read -p "Domain root name (do NOT add www): " domain;
   read -p "Enter full doc root path: " docRoot;
@@ -136,7 +141,7 @@ function setUpVhost {
   if [ ! -d "$docRoot" ]
   then
     sudo mkdir $docRoot;
-    sudo chown -R $USER:www-data $docRoot;
+    sudo chown -R www-data:www-data $docRoot;
     sudo chmod 755 $docRoot;
   fi
   newSiteConf="$sitesAvailable$domain.conf";
@@ -166,7 +171,7 @@ function runOptionalInstall {
       sudo apt-get -y install mysql-server libapache2-mod-auth-mysql;
       sudo mysql_install_db
       sudo /usr/bin/mysql_secure_installation
-      printf "\e[32mMySQL Installed. Please run secure install. \"mysql_secure_installation\"\n\e[39m";
+      printf "${greenText}MySQL Installed. Please run secure install. \"mysql_secure_installation\"\n${defaultText}";
   fi
   if $wordpress
   then
@@ -182,8 +187,8 @@ function runOptionalInstall {
   fi
 }
 
-printf "\nYou are about to install an a complete LAMP stack. Ensure you are doing this on a new, clean server.
-\nContinue? (Use numeric selections)\n";
+printf "\n${greenText}You are about to install an a complete LAMP stack. Ensure you are doing this on a new, clean server.
+\nContinue? (Use numeric selections)\n${defaultText}";
 select yn in "Yes" "No"; do
     case $yn in
         Yes ) break;;
