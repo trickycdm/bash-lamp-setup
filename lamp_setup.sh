@@ -145,7 +145,8 @@ function setUpVhost {
     sudo chmod 755 $docRoot;
   fi
   newSiteConf="$sitesAvailable$domain.conf";
-  printf "<VirtualHost *:80>
+  printf "
+  <VirtualHost *:80>
 			ServerAdmin $email
 			ServerName $domain
 			DocumentRoot $docRoot
@@ -153,14 +154,16 @@ function setUpVhost {
 				AllowOverride All
 			</Directory>
 			<Directory $docRoot>
-				Options Indexes FollowSymLinks MultiViews
+				Options -Indexes +FollowSymLinks +MultiViews
 				AllowOverride all
 				Require all granted
 			</Directory>
 			ErrorLog /var/log/apache2/$domain-error.log
 			LogLevel error
 			CustomLog /var/log/apache2/$domain-access.log combined
-		</VirtualHost>" > $newSiteConf;
+	</VirtualHost>
+
+    " > $newSiteConf;
     sudo a2ensite $domain;
     sudo service apache2 restart;
     printf "New vHost created. Your doc root is $docRoot. Custom error logs have been added to /var/log/apache2.\n\n";
