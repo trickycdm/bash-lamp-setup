@@ -5,7 +5,7 @@ It is recommended to run this script on a new clean server.
 
 It will install:
 * Apache2
-* PHP5 [php5-curl, php5-mysql, libapache2-mod-php5, php5-mcrypt]
+* PHP7 [php-curl, php-mysql, libapache2-mod-php, php-mcrypt]
 * Git
 * Let's Encrypt
 
@@ -28,4 +28,5 @@ Where *your ssh config host* is either the hostname from your ssh config file OR
 
 This will create the ssh connection and run the setup. 95% is automated but you will be prompted for the optionals and vHost setup. It should take around 3-4 minutes to complete.
 # TLS setup
-This uses Let's Encrypt to automate the TLS setup. In order for this to work your domain must be resolving to the server you are setting up.
+This uses Let's Encrypt to automate the TLS setup. In order for this to work your domain must be resolving to the server you are setting up. It will also offer the cron job Details
+setting up the auto renewal.
