@@ -2,7 +2,7 @@
 #****************************************************************
 #bash script to set up a basic Ubuntu/Debian LAMP stack stack including:
 #Apache2
-#PHP5 [php5-curl, php5-mysql, libapache2-mod-php5, php5-mcrypt]
+#PHP7 [php-curl, php-mysql, libapache2-mod-php, php-mcrypt]
 #Git
 #lets encrypt
 #OPTIONALS:
@@ -10,11 +10,10 @@
 #Wordpress and the WP-CLI tools
 #Fail2Ban
 
-#Note the use of sudo, you should never be running this script as root!
 #if you want to run this from a local to remote host use: ssh <your ssh config host> -t "$(<lamp_setup.sh)"
 
 #Written by: Colin Mackenzie
-#Updated: 6-6-16
+#Updated: 4-8-16
 #****************************************************************
 
 #vars used to control optionals
@@ -68,7 +67,7 @@ function setUpDefaults {
 }
 function installLap {
   sudo apt-get -y install apache2;
-  sudo apt-get -y install php5 libapache2-mod-php5 php5-mcrypt php5-mysql php5-curl;
+  sudo apt-get -y install php libapache2-mod-php php-mcrypt php-mysql php-curl;
   sudo chmod 755 -R /var/www/;
   sudo printf "<?php\nphpinfo();\n?>" > /var/www/html/info.php;
   sudo service apache2 restart;
@@ -79,6 +78,11 @@ function installLap {
 function installLe {
   cd /;
   sudo git clone https://github.com/certbot/certbot;
+}
+function autoRenewCerts {
+  printf "Want to auto renew your LE certs? Open crontab (crontab -e) and add this line. It will attempt a renewal every month."
+  #echo new cron into cron file set certs to attemp auto update every month. Will only run if cert has < 30 left
+  printf "\n${greenText}00 00 01 * * ~/certbot/certbot-auto renew --quiet --no-self-upgrade${defaultText}\n";
 }
 function checkForRoot {
   if [ "`whoami`" == "root" ];
@@ -171,7 +175,7 @@ function setUpVhost {
 function runOptionalInstall {
   if $mySql
   then
-      sudo apt-get -y install mysql-server libapache2-mod-auth-mysql;
+      sudo apt-get -y install mysql-server;
       sudo mysql_install_db
       sudo /usr/bin/mysql_secure_installation
       printf "${greenText}MySQL Installed. Please run secure install. \"mysql_secure_installation\"\n${defaultText}";
