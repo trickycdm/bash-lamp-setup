@@ -69,10 +69,8 @@ function installLap {
   sudo apt-get -y install apache2;
   sudo apt-get -y install php libapache2-mod-php php-mcrypt php-mysql php-curl;
   sudo chmod 755 -R /var/www/;
-  sudo printf "<?php\nphpinfo();\n?>" > /var/www/html/info.php;
   sudo service apache2 restart;
-  sudo apt-get -y install git;
-  printf "${greenText}Apache2, PHP5, Git and installed. An info.php file has been created in you webroot (/var/www/html/info.php)\n${defaultText}";
+  printf "${greenText}Apache2, PHP and installed.\n${defaultText}";
 }
 #install lets encrypt
 function installLe {
@@ -118,6 +116,7 @@ function createNewUser {
 function installWordpress {
   #install the Apache2 mod rewrite module to allow Wordpress to use htaccess
   sudo a2enmod rewrite;
+  sudo apt-get install -y php-curl php-gd php-mbstring php-mcrypt php-xml php-xmlrpc;
   sudo curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar;
   sudo chmod +x wp-cli.phar;
   sudo mv wp-cli.phar /usr/local/bin/wp;
